@@ -1,13 +1,411 @@
-<html>
-  <body>
-    <button onclick="getNews()">Generate news</button>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>News Dashboard</title>
+  <style>
+    :root {
+      --bg-color: #f5f5f5;
+      --text-color: #333;
+      --primary-color: #3498db;
+      --secondary-color: #2ecc71;
+      --card-bg: #ffffff;
+      --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --header-bg: #3498db;
+    }
+
+    .dark-mode {
+      --bg-color: #1a1a1a;
+      --text-color: #f5f5f5;
+      --primary-color: #2980b9;
+      --secondary-color: #27ae60;
+      --card-bg: #2c2c2c;
+      --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      --header-bg: #2c3e50;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      background-color: var(--header-bg);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: var(--card-shadow);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 2rem;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      flex-grow: 1;
+      max-width: 500px;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      flex-grow: 1;
+      background-color: var(--card-bg);
+      color: var(--text-color);
+    }
+
+    button {
+      padding: 10px 15px;
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: var(--secondary-color);
+    }
+
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toggle {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 30px;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 22px;
+      width: 22px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: var(--primary-color);
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(30px);
+    }
+
+    .category-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .category-btn {
+      padding: 8px 12px;
+      background-color: var(--card-bg);
+      color: var(--text-color);
+      border: 1px solid var(--primary-color);
+      border-radius: 20px;
+      cursor: pointer;
+    }
+
+    .category-btn.active {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    #result {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .news-card {
+      background-color: var(--card-bg);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: var(--card-shadow);
+      transition: transform 0.3s;
+    }
+
+    .news-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .news-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+
+    .news-title {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      color: var(--primary-color);
+    }
+
+    .news-content {
+      margin-bottom: 15px;
+    }
+
+    .news-meta {
+      display: flex;
+      justify-content: space-between;
+      color: #777;
+      font-size: 0.9rem;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .spinner {
+      border: 4px solid rgba(0, 0, 0, 0.1);
+      border-left-color: var(--primary-color);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 20px;
+      padding: 10px;
+      color: #777;
+    }
+
+    @media (max-width: 768px) {
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .search-bar {
+        max-width: 100%;
+      }
+    }
+
+    a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+a:visited {
+  color: #6610f2;
+}
+
+a:active {
+  color: #0056b3;
+}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>News Generator</h1>
+      <p>Stay updated with the latest news</p>
+    </header>
+
+    <div class="controls">
+      <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search news...">
+        <button id="searchBtn">Search</button>
+      </div>
+      
+      <div class="toggle-container">
+        <span>🌞</span>
+        <label class="toggle">
+          <input type="checkbox" id="darkModeToggle">
+          <span class="slider"></span>
+        </label>
+        <span>🌙</span>
+      </div>
+    </div>
+
+    <div class="category-filters">
+      <button class="category-btn active" data-category="all">All</button>
+      <button class="category-btn" data-category="technology">Technology</button>
+      <button class="category-btn" data-category="business">Business</button>
+      <button class="category-btn" data-category="health">Health</button>
+      <button class="category-btn" data-category="science">Science</button>
+      <button class="category-btn" data-category="entertainment">Entertainment</button>
+    </div>
+
+    <button id="generateNews">Generate News</button>
+    
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>Loading news...</p>
+    </div>
+
     <div id="result"></div>
-    <script>
-      const API_KEY =
-        "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";
 
+    <footer>
+      <p><a href="https://portfolio-frontend-dlq3.onrender.com">Om Pawar</a></p>
+    </footer>
+  </div>
 
-      async function getNews() {
+  <script>
+    const API_KEY = "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";
+    let currentCategory = "all";
+    let newsItems = [];
+
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const body = document.body;
+
+    if (localStorage.getItem('darkMode') === 'true') {
+      body.classList.add('dark-mode');
+      darkModeToggle.checked = true;
+    }
+
+    darkModeToggle.addEventListener('change', () => {
+      if (darkModeToggle.checked) {
+        body.classList.add('dark-mode');
+        localStorage.setItem('darkMode', 'true');
+      } else {
+        body.classList.remove('dark-mode');
+        localStorage.setItem('darkMode', 'false');
+      }
+    });
+
+    const categoryButtons = document.querySelectorAll('.category-btn');
+    categoryButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        categoryButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+        currentCategory = button.dataset.category;
+        filterNews();
+      });
+    });
+
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+
+    searchBtn.addEventListener('click', () => {
+      filterNews();
+    });
+
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        filterNews();
+      }
+    });
+
+    function filterNews() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = '';
+
+      let filteredNews = [...newsItems];
+
+      if (currentCategory !== 'all') {
+        filteredNews = filteredNews.filter(item => 
+          item.category.toLowerCase() === currentCategory.toLowerCase()
+        );
+      }
+
+      if (searchTerm) {
+        filteredNews = filteredNews.filter(item => 
+          item.title.toLowerCase().includes(searchTerm) || 
+          item.content.toLowerCase().includes(searchTerm)
+        );
+      }
+
+      if (filteredNews.length === 0) {
+        resultDiv.innerHTML = '<div class="news-card"><p>No news found matching your criteria.</p></div>';
+      } else {
+        filteredNews.forEach(item => {
+          renderNewsItem(item);
+        });
+      }
+    }
+
+    function renderNewsItem(newsItem) {
+      const resultDiv = document.getElementById('result');
+      const newsCard = document.createElement('div');
+      newsCard.className = 'news-card';
+      
+      newsCard.innerHTML = `
+        <img src="${newsItem.image}" alt="${newsItem.title}" class="news-image">
+        <h3 class="news-title">${newsItem.title}</h3>
+        <div class="news-content">${newsItem.content}</div>
+        <div class="news-meta">
+          <span>${newsItem.category}</span>
+          <span>${newsItem.date}</span>
+        </div>
+      `;
+      
+      resultDiv.appendChild(newsCard);
+    }
+
+    async function getNews() {
+      const loading = document.getElementById('loading');
+      loading.style.display = 'block';
+      
+      try {
         const response = await fetch(
           "https://api.groq.com/openai/v1/chat/completions",
           {
@@ -21,19 +419,50 @@
               messages: [
                 {
                   role: "user",
-                  content: "Generate a news only in div tag with good css",
+                  content: `Generate 6 news articles in JSON format. Each article should have the following fields: title, content, category (one of: technology, business, health, science, entertainment), image (use placeholder URL like https://via.placeholder.com/400x200?text=News+Image), and date (recent date in March 2025). The content should be 2-3 sentences long.`,
                 },
               ],
             }),
           }
         );
+        
         const body = await response.json();
-        console.log(body.choices[0].message.content);
-
-        let newDiv = document.createElement('div');
-        newDiv.innerHTML = body.choices[0].message.content;
-        document.getElementById('result').appendChild(newDiv);
+        console.log(body);
+        
+        let content = body.choices[0].message.content;
+        
+        if (content.includes('```json')) {
+          content = content.split('```json')[1].split('```')[0].trim();
+        } else if (content.includes('```')) {
+          content = content.split('```')[1].split('```')[0].trim();
+        }
+        
+        const newsData = JSON.parse(content);
+        newsItems = Array.isArray(newsData) ? newsData : newsData.articles || [];
+        
+        document.getElementById('result').innerHTML = '';
+        
+        newsItems.forEach(item => {
+          renderNewsItem(item);
+        });
+      } catch (error) {
+        console.error('Error fetching news:', error);
+        document.getElementById('result').innerHTML = `
+          <div class="news-card">
+            <p>Error fetching news. Please try again later.</p>
+            <p>Technical details: ${error.message}</p>
+          </div>
+        `;
+      } finally {
+        loading.style.display = 'none';
       }
-    </script>
-  </body>
+    }
+
+    document.getElementById('generateNews').addEventListener('click', getNews);
+
+    window.addEventListener('DOMContentLoaded', () => {
+      getNews();
+    });
+  </script>
+</body>
 </html>
